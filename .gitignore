@@ -38,6 +38,7 @@ CLAUDE.local.md
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -49,10 +50,15 @@ yarn-error.log*
 # env files
 .env*
 !.env.example
+!.env.*.example
 
 # server provider config (contains API keys)
 server-providers.yml
 server-providers-*.yml
+server-providers.yaml
+server-providers-*.yaml
+!server-providers.example.yml
+!server-providers.example.yaml
 
 # vercel
 .vercel
@@ -72,8 +78,6 @@ next-env.d.ts
 /data
 /logs
 
-# docs
-/docs
 # Eval results
 eval/whiteboard-layout/results/
 eval/outline-language/results/

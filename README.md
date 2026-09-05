@@ -1,3 +1,26 @@
+# OpenMAIC Australian Investment Education Pilot
+
+This repository combines the upstream OpenMAIC application with an experimental,
+controlled Australian investment-education pilot. It adds six reviewable course
+starters, safer generated-rich-text rendering, improved release checks and a
+simple Windows launcher.
+
+**Start here:**
+
+- [Pilot status, safeguards and acceptance test](PRODUCTION-PILOT.md)
+- [ASX Investing Basics sample PowerPoint](ASX%20Investing%20Basics.pptx)
+- [Content-quality review of the sample](SAMPLE-CONTENT-REVIEW.md)
+- [Original review and improvement plan](docs/superpowers/plans/2026-09-05-review-and-improvements.md)
+
+This remains an internal pilot, not an approved public multi-user production
+service and not a source of personal financial advice. Never commit provider
+keys, populated environment files, access codes or private learner material.
+
+The customised code is based on upstream OpenMAIC v1.0.0 and retains the
+upstream MIT licence and third-party notices described below.
+
+---
+
 <!-- <p align="center">
   <img src="assets/logo-horizontal.png" alt="OpenMAIC" width="420"/>
 </p> -->
