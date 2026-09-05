@@ -497,6 +497,7 @@ describe('material agent tools', () => {
         sessionId: 'ses_1',
         listMaterials: vi.fn().mockResolvedValue([material()]),
         readTextAsset: singleAsset(Buffer.from('a'.repeat(1_100_000))),
+        searchNow: () => 0,
       }),
       'search_material',
     );
@@ -504,6 +505,30 @@ describe('material agent tools', () => {
     expect(result.details).toMatchObject({
       mode: 'literal',
       scannedChars: 1_000_000,
+      truncated: true,
+      hits: [],
+    });
+  });
+
+  it('stops at the time budget independently of the character budget', async () => {
+    let clock = 0;
+    const search = tool(
+      buildMaterialTools({
+        sessionId: 'ses_1',
+        listMaterials: vi.fn().mockResolvedValue([material()]),
+        readTextAsset: async () => {
+          clock = 100;
+          return Buffer.from('a'.repeat(20_000));
+        },
+        searchNow: () => clock,
+      }),
+      'search_material',
+    );
+
+    const result = await search.execute('call_1', { query: 'not-present' } as never);
+    expect(result.details).toMatchObject({
+      mode: 'literal',
+      scannedChars: 0,
       truncated: true,
       hits: [],
     });

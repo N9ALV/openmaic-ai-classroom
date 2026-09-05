@@ -32,8 +32,8 @@ import {
  * publish both run to completion. Several turns: recovery is scheduled on one,
  * the notice it does or does not cancel on the next.
  */
-const flushTasks = async () => {
-  for (let i = 0; i < 12; i++) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+const flushTasks = async (turns = 12) => {
+  for (let i = 0; i < turns; i++) await vi.advanceTimersByTimeAsync(1);
 };
 
 /**
@@ -164,6 +164,7 @@ let health: PersistHealthEvent[] = [];
 const problems = () => health.filter((e) => e.status !== 'recovered').map((e) => e.name);
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   resetPersistHealth();
@@ -173,6 +174,8 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   resetPersistHealth();
+  vi.clearAllTimers();
+  vi.useRealTimers();
 });
 
 describe('createKVPersistStorage — round trip', () => {
@@ -704,7 +707,7 @@ describe('createKVPersistStorage — recovery is bounded and re-armable', () => 
     await persist.getItem(NAME);
     h.kv.failSet = true;
     await persist.setItem(NAME, { state: { nickname: 'edited' }, version: 4 });
-    for (let i = 0; i < 40; i++) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await flushTasks(40);
 
     // Exactly the budget: not "a few", and emphatically not one per lap.
     expect(attempts).toHaveLength(3);

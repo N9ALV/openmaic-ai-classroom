@@ -1,18 +1,21 @@
 import { apiSuccess } from '@/lib/server/api-response';
+import packageInfo from '@/package.json';
 import {
+  getServerProviders,
   getServerWebSearchProviders,
   getServerImageProviders,
   getServerVideoProviders,
   getServerTTSProviders,
 } from '@/lib/server/provider-config';
 
-const version = process.env.npm_package_version || '0.1.0';
+const version = process.env.npm_package_version || packageInfo.version;
 
 export async function GET() {
   return apiSuccess({
     status: 'ok',
     version,
     capabilities: {
+      llm: Object.keys(getServerProviders()).length > 0,
       // A capability is available only when at least one provider is enabled —
       // force-disabled providers (disabled: true) do not count (#665).
       webSearch: Object.values(getServerWebSearchProviders()).some((info) => !info.disabled),

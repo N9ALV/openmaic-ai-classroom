@@ -42,6 +42,24 @@ describe('Security response headers', () => {
         value: "frame-ancestors 'self'",
       });
     });
+
+    it('includes baseline browser hardening headers', async () => {
+      const config = await loadConfig();
+      const headerGroups = await config.headers!();
+      const allRouteGroup = headerGroups.find((g) => g.source === '/(.*)')!;
+
+      expect(allRouteGroup.headers).toEqual(
+        expect.arrayContaining([
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), geolocation=(), payment=(), usb=()',
+          },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+        ]),
+      );
+    });
   });
 
   describe('with ALLOWED_FRAME_ANCESTORS', () => {

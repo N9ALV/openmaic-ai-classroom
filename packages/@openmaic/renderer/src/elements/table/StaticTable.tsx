@@ -3,6 +3,7 @@
 import { useMemo, type CSSProperties } from 'react';
 import type { PPTTableElement, TableCellBorder } from '@openmaic/dsl';
 import { getTableSubThemeColor } from '../../utils/element';
+import { sanitizeRichTextHtml } from '../../utils/sanitizeRichText';
 import { getTextStyle } from './tableUtils';
 
 function cellBorderCss(b?: TableCellBorder): string | undefined {
@@ -140,7 +141,7 @@ export function StaticTable({ elementInfo }: StaticTableProps) {
                     // replacement corrupts style attributes like
                     // `margin-left: calc(42px + 0.25em)` → the title indent is
                     // lost and collides with the cell's left icon (slide 5).
-                    dangerouslySetInnerHTML={{ __html: cell.text }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(cell.text) }}
                   />
                 </td>
               );

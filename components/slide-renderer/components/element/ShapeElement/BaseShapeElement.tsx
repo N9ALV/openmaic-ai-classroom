@@ -1,6 +1,7 @@
 'use client';
 
 import type { PPTShapeElement, ShapeText } from '@openmaic/dsl';
+import { sanitizeRichTextHtml } from '@openmaic/renderer';
 import { useElementOutline } from '../hooks/useElementOutline';
 import { useElementShadow } from '../hooks/useElementShadow';
 import { useElementFlip } from '../hooks/useElementFlip';
@@ -108,7 +109,7 @@ export function BaseShapeElement({ elementInfo }: BaseShapeElementProps) {
                 // @ts-expect-error CSS custom properties
                 '--paragraphSpace': `${text.paragraphSpace === undefined ? 5 : text.paragraphSpace}px`,
               }}
-              dangerouslySetInnerHTML={{ __html: text.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(text.content) }}
             />
           </div>
         </div>

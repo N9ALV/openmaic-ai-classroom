@@ -5,6 +5,7 @@ import type { PPTTextElement } from '@openmaic/dsl';
 import { useElementShadow } from '../shared/useElementShadow';
 import { ElementOutline } from '../shared/ElementOutline';
 import { preservesPlainTextLineBreaks } from '../../utils/richText';
+import { sanitizeRichTextHtml } from '../../utils/sanitizeRichText';
 
 export interface BaseTextElementProps {
   elementInfo: PPTTextElement;
@@ -26,7 +27,7 @@ export function BaseTextElement({ elementInfo, target, renderContent }: BaseText
         pointerEvents: target === 'thumbnail' ? 'none' : undefined,
         whiteSpace: preservesPlainTextLineBreaks(elementInfo.content) ? 'pre-line' : undefined,
       }}
-      dangerouslySetInnerHTML={{ __html: elementInfo.content }}
+      dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(elementInfo.content) }}
     />
   );
 

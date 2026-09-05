@@ -194,6 +194,8 @@ const YAML_SECTION_KEY: Record<CapabilitySection, keyof YamlData> = {
 // YAML loading
 // ---------------------------------------------------------------------------
 
+const DEFAULT_FILENAME = 'server-providers.yml';
+
 type YamlData = Partial<{
   providers: Record<string, Partial<ServerProviderEntry>>;
   tts: Record<string, Partial<ServerProviderEntry>>;
@@ -204,16 +206,16 @@ type YamlData = Partial<{
   'web-search': Record<string, Partial<ServerProviderEntry>>;
 }>;
 
-function loadYamlFile(filename: string): YamlData {
+function loadYamlFile(): YamlData {
   try {
-    const filePath = path.join(process.cwd(), filename);
+    const filePath = path.join(process.cwd(), DEFAULT_FILENAME);
     if (!fs.existsSync(filePath)) return {};
     const raw = fs.readFileSync(filePath, 'utf-8');
     const parsed = yaml.load(raw) as Record<string, unknown> | null;
     if (!parsed || typeof parsed !== 'object') return {};
     return parsed as YamlData;
   } catch (e) {
-    log.warn(`[ServerProviderConfig] Failed to load ${filename}:`, e);
+    log.warn(`[ServerProviderConfig] Failed to load ${DEFAULT_FILENAME}:`, e);
     return {};
   }
 }
@@ -350,7 +352,6 @@ function collectDisabledProviders(yamlData: YamlData): Record<CapabilitySection,
 // Module-level cache (process singleton)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_FILENAME = 'server-providers.yml';
 const OPENAI_IMAGE_PROVIDER_ID = 'openai-image';
 const ALIDOCMIND_PROVIDER_ID = 'alidocmind';
 const BEDROCK_PROVIDER_ID = 'bedrock';
@@ -555,7 +556,7 @@ function getConfig(): ServerConfig {
   const cached = _configs.get('');
   if (cached) return cached;
 
-  const yamlData = loadYamlFile(DEFAULT_FILENAME);
+  const yamlData = loadYamlFile();
   const config = buildConfig(yamlData);
   logConfig(config, DEFAULT_FILENAME);
   _configs.set('', config);

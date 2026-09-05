@@ -44,6 +44,10 @@ function wrapStore(store: RuntimeStore, overrides: Partial<RuntimeStore>): Runti
 
 describe('quiz attempt runtime persistence', () => {
   beforeEach(() => {
+    // Node 24.5+ exposes navigator.locks. These tests deliberately exercise the
+    // no-Web-Locks fallback and create barriers that would deadlock if the
+    // ambient Node lock serialised both simulated tabs.
+    vi.stubGlobal('navigator', {});
     Object.defineProperty(globalThis, 'IDBKeyRange', {
       configurable: true,
       value: IDBKeyRange,
@@ -52,6 +56,7 @@ describe('quiz attempt runtime persistence', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('coalesces rapid draft changes into one latest snapshot', async () => {

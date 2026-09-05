@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { PPTTableElement } from '@openmaic/dsl';
+import { sanitizeRichTextHtml } from '@openmaic/renderer';
 import { getTableSubThemeColor } from '@/lib/utils/element';
 import { getTextStyle, formatText, getHiddenCells } from './tableUtils';
 
@@ -130,7 +131,7 @@ export function StaticTable({ elementInfo }: StaticTableProps) {
                     wordBreak: 'break-word',
                     ...textStyle,
                   }}
-                  dangerouslySetInnerHTML={{ __html: formatText(cell.text) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(formatText(cell.text)) }}
                 />
               );
             })}

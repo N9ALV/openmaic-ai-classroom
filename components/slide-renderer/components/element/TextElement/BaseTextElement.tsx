@@ -1,6 +1,7 @@
 'use client';
 
 import type { PPTTextElement } from '@openmaic/dsl';
+import { sanitizeRichTextHtml } from '@openmaic/renderer';
 import { useElementShadow } from '../hooks/useElementShadow';
 import { ElementOutline } from '../ElementOutline';
 
@@ -56,7 +57,7 @@ export function BaseTextElement({ elementInfo, target }: BaseTextElementProps) {
           />
           <div
             className={`text ProseMirror-static relative ${target === 'thumbnail' ? 'pointer-events-none' : ''}`}
-            dangerouslySetInnerHTML={{ __html: elementInfo.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(elementInfo.content) }}
           />
         </div>
       </div>

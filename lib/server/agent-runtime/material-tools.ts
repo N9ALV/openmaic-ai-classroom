@@ -22,7 +22,7 @@ import { randomBytes } from 'node:crypto';
 
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 import type { AgentSessionMaterial } from '@openmaic/storage';
-import { Type, type Static } from 'typebox';
+import { Type } from 'typebox';
 
 import {
   getSessionMaterial,
@@ -92,6 +92,8 @@ export interface MaterialToolDependencies {
   waitPollIntervalMs?: number;
   waitForDelay?: (milliseconds: number) => Promise<void>;
   now?: () => number;
+  /** Monotonic search-budget clock; defaults to performance.now(). */
+  searchNow?: () => number;
 }
 
 /** The fail-closed answer: a referenced id does not exist or is not visible here. */
@@ -282,6 +284,7 @@ export function buildMaterialTools(deps: MaterialToolDependencies): AgentTool<ne
     ((milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
   const waitPollIntervalMs = deps.waitPollIntervalMs ?? MATERIAL_WAIT_POLL_MS;
   const now = deps.now ?? Date.now;
+  const searchNow = deps.searchNow ?? (() => performance.now());
 
   const listTool: AgentTool<typeof LIST_MATERIALS_SCHEMA> = {
     name: 'list_materials',
@@ -402,7 +405,7 @@ export function buildMaterialTools(deps: MaterialToolDependencies): AgentTool<ne
         throw new Error('search_material query must contain 1 to 200 characters');
       }
       const needle = foldCase(params.query);
-      const deadline = performance.now() + SEARCH_TIME_BUDGET_MS;
+      const deadline = searchNow() + SEARCH_TIME_BUDGET_MS;
       let scannedChars = 0;
       let truncated = false;
       const hits: Array<{
@@ -417,7 +420,7 @@ export function buildMaterialTools(deps: MaterialToolDependencies): AgentTool<ne
       for (const record of records) {
         throwIfAborted(signal);
         if (!isSearchableTextRecord(record)) continue;
-        if (scannedChars >= MAX_SEARCH_CHARS_PER_EXEC || performance.now() >= deadline) {
+        if (scannedChars >= MAX_SEARCH_CHARS_PER_EXEC || searchNow() >= deadline) {
           truncated = true;
           break;
         }
@@ -430,7 +433,7 @@ export function buildMaterialTools(deps: MaterialToolDependencies): AgentTool<ne
         const maxDecodeBytes = Math.min(raw.length, remainingCharsBeforeRead * 4);
         const text = raw.toString('utf8', 0, maxDecodeBytes);
         const sourceWasByteTruncated = maxDecodeBytes < raw.length;
-        if (performance.now() >= deadline) {
+        if (searchNow() >= deadline) {
           truncated = true;
           break;
         }
@@ -443,7 +446,7 @@ export function buildMaterialTools(deps: MaterialToolDependencies): AgentTool<ne
         ) {
           throwIfAborted(signal);
           const remainingChars = MAX_SEARCH_CHARS_PER_EXEC - scannedChars;
-          if (remainingChars <= 0 || performance.now() >= deadline) {
+          if (remainingChars <= 0 || searchNow() >= deadline) {
             truncated = true;
             break;
           }

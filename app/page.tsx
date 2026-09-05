@@ -74,6 +74,7 @@ import { displayNameWidth, FOLDER_NAME_MAX_WIDTH } from '@/lib/utils/folder-name
 import { FolderCard } from '@/components/discovery/folder-card';
 import { NewFolderDialog } from '@/components/discovery/folder-dialogs';
 import { MoveToFolderMenu } from '@/components/discovery/move-to-folder-menu';
+import { InvestmentStarterPack } from '@/components/discovery/investment-starter-pack';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
 import type { Slide } from '@openmaic/dsl';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
@@ -962,6 +963,14 @@ function HomePage() {
             </div>
           </div>
         </motion.div>
+
+        <InvestmentStarterPack
+          currentRequirement={form.requirement}
+          onSelect={(prompt) => {
+            updateForm('requirement', prompt);
+            requestAnimationFrame(() => textareaRef.current?.focus());
+          }}
+        />
 
         {showVocationalTestUi && (
           <motion.div

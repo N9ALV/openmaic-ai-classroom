@@ -36,5 +36,6 @@ export {
 export { cn } from './utils/cn';
 export { getElementRange, getLineElementPath, getTableSubThemeColor } from './utils/element';
 export { createTextProseStyles } from './styles';
+export { sanitizeRichTextHtml } from './utils/sanitizeRichText';
 
 export * from './types';

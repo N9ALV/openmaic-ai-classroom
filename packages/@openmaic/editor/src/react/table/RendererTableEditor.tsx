@@ -11,7 +11,7 @@ import {
 } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import type { PPTTableElement, TableCell, TableCellBorder } from '@openmaic/dsl';
-import { getTableSubThemeColor } from '@openmaic/renderer';
+import { getTableSubThemeColor, sanitizeRichTextHtml } from '@openmaic/renderer';
 import { getTextStyle } from '@openmaic/renderer/elements';
 import { RendererTextEditor } from '../text/RendererTextEditor';
 import type { TextEditorController, TextFormatState } from '../text/types';
@@ -308,7 +308,7 @@ export const RendererTableEditor = forwardRef<
                   ) : (
                     <div
                       style={{ ...cellTextStyle, cursor: 'text' }}
-                      dangerouslySetInnerHTML={{ __html: cell.text }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(cell.text) }}
                     />
                   )}
                 </td>

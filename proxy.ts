@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { isAgentRuntimeConfigured, isProWorkbenchEnabled } from '@/lib/config/feature-flags';
+import { isAccessTokenTimestampValid } from '@/lib/access-token-policy';
 
 /** Convert string to Uint8Array */
 function encode(str: string): Uint8Array {
@@ -21,6 +22,8 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
 
   const timestamp = token.substring(0, dotIndex);
   const signature = token.substring(dotIndex + 1);
+
+  if (!isAccessTokenTimestampValid(timestamp)) return false;
 
   const keyData = encode(accessCode);
   const key = await crypto.subtle.importKey(
@@ -43,7 +46,7 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
   return mismatch === 0;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Return an actual server-side 404 when either half of the workbench is off.
