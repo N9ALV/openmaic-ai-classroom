@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 import type { RuntimeRecord } from '@openmaic/dsl';
 import { BrowserRuntimeStore } from '@openmaic/storage';
@@ -153,6 +153,13 @@ async function readSseEvents(response: Response) {
 }
 
 describe('PR2 Native Child route production wiring', () => {
+  beforeAll(async () => {
+    // Populate the transform cache outside the route-behaviour timeout. Reset
+    // evaluation afterwards so each case still imports with its own env/mocks.
+    await import('@/app/api/chat/pi/route');
+    vi.resetModules();
+  }, 120_000);
+
   beforeEach(() => {
     vi.stubGlobal('IDBKeyRange', IDBKeyRange);
     for (const name of envNames) originalEnv.set(name, process.env[name]);

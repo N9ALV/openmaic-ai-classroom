@@ -34,7 +34,9 @@ export async function buildSkillDirZip(dir: string, root: string): Promise<Buffe
     await stat(dir);
     const bundle = new JSZip();
     for (const file of await walk(dir)) {
-      bundle.file(`${root}/${relative(dir, file)}`, await readFile(file));
+      // ZIP entry names are POSIX paths on every operating system. Native
+      // Windows separators otherwise break nested portable skill references.
+      bundle.file(`${root}/${relative(dir, file).replaceAll('\\', '/')}`, await readFile(file));
     }
     zip = await bundle.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   } catch {

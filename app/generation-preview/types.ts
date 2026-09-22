@@ -34,6 +34,8 @@ export interface GenerationSessionState {
   // Web search context
   researchContext?: string;
   researchSources?: Array<{ title: string; url: string }>;
+  researchReceipt?: string;
+  researchRetrievedAt?: string;
   // Language directive inferred from outline generation
   languageDirective?: string;
   // Concise course title inferred from outline generation (used as the stage name)

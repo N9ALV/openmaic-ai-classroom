@@ -17,6 +17,8 @@ export function verifyAccessToken(token: string, accessCode: string, now = Date.
   const timestamp = token.substring(0, dotIndex);
   const signature = token.substring(dotIndex + 1);
 
+  if (!/^[a-f0-9]{64}$/.test(signature)) return false;
+
   if (!isAccessTokenTimestampValid(timestamp, now)) return false;
 
   const expected = createHmac('sha256', accessCode).update(timestamp).digest('hex');

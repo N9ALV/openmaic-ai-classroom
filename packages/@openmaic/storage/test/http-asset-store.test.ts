@@ -46,12 +46,13 @@ function makeStore(principal = 'principal-a', storeId = `asset-${namespace++}`):
 }
 
 function rawRequest(options: {
+  baseUrl?: string;
   method: string;
   path: string;
   headers?: Record<string, string>;
   body?: Buffer | string;
 }): Promise<RawResponse> {
-  const url = new URL(server.baseUrl);
+  const url = new URL(options.baseUrl ?? server.baseUrl);
   const body = typeof options.body === 'string' ? Buffer.from(options.body) : options.body;
   const headers = {
     ...(options.headers ?? {}),
@@ -634,7 +635,7 @@ describe('asset HTTP handler contract', () => {
     ['continuation parameter', 'form-data; name=meta; name*0=bytes'],
     ['non-ASCII separator', 'form-data;\u00a0name=meta'],
     ['bare LF in a quoted filename', 'form-data; name=meta; filename="a\nb"'],
-  ] as const)('platform parser rejects %s', async (_label, metaDisposition) => {
+  ] as const)('rejects %s without registry writes', async (label, metaDisposition) => {
     const boundary = 'asset-test-boundary';
     const body = Buffer.concat([
       Buffer.from(
@@ -648,19 +649,31 @@ describe('asset HTTP handler contract', () => {
       ),
       Buffer.from(`--${boundary}--\r\n`),
     ]);
-    const response = await rawRequest({
-      method: 'POST',
-      path: '/assets',
-      headers: multipartHeaders(`disposition-${namespace++}`, 'principal-a', boundary),
-      body,
-    });
-    expect(response.status).toBe(400);
-    expect(JSON.parse(response.body.toString())).toEqual({
-      error: {
-        code: 'VALIDATION_FAILED',
-        message: '@openmaic/storage: malformed multipart body',
-      },
-    });
+    const registry = unreachableRegistry();
+    const isolated = await startAssetConformanceServer({ store: () => registry.store });
+    try {
+      const response = await rawRequest({
+        baseUrl: isolated.baseUrl,
+        method: 'POST',
+        path: '/assets',
+        headers: multipartHeaders(`disposition-${namespace++}`, 'principal-a', boundary),
+        body,
+      });
+      expect(response.status).toBe(400);
+      const error = JSON.parse(response.body.toString()).error;
+      expect(error.code).toBe('VALIDATION_FAILED');
+      // Node 24's platform parser accepts the trailing characters, then our
+      // required-file check rejects this text part. Node 22 rejects it in the
+      // parser. Both must fail closed before any registry method is reached;
+      // pin the two documented validation messages, not incidental parser order.
+      const messages = ['@openmaic/storage: malformed multipart body'];
+      if (label === 'trailing text after a quote')
+        messages.push('@openmaic/storage: the meta part must be sent as a file');
+      expect(messages).toContain(error.message);
+      for (const method of registry.methods) expect(method).not.toHaveBeenCalled();
+    } finally {
+      await isolated.close();
+    }
   });
 
   test('rejects a meta part without filename as text-decoded data', async () => {

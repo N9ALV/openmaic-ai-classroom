@@ -142,6 +142,16 @@ export interface Stage {
   id: string;
   name: string;
   description?: string;
+  /** Retrieved evidence, not a statement of editorial approval. */
+  education?: {
+    courseType: 'investment';
+    requirement: string;
+    researchContext: string;
+    sources: Array<{ title: string; url: string }>;
+    retrievedAt?: string;
+    generatedAt: string;
+    model?: string;
+  };
   createdAt: number;
   updatedAt: number;
   // Stage metadata

@@ -147,6 +147,11 @@ async function runtimeChatRecords(store: RuntimeStore): Promise<RuntimeRecord[]>
 }
 
 beforeEach(() => {
+  // Fallback-race tests simulate independent browser tabs without Web Locks.
+  // Node 24 now provides navigator.locks; leaving it ambient serialises those
+  // tabs and deadlocks their deliberate concurrency barriers. Tests of the
+  // locking path install their own explicit lock harness.
+  vi.stubGlobal('navigator', {});
   vi.clearAllMocks();
 });
 

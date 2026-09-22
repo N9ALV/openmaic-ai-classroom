@@ -1,4 +1,5 @@
 'use client';
+import { parseEducationMetadata, restoreImportedReview } from '@/lib/learning/classroom-review';
 
 import { useState, useCallback, useRef } from 'react';
 import { nanoid } from 'nanoid';
@@ -446,6 +447,7 @@ export function useImportClassroom(onSuccess?: (importedStageId: string) => void
             id: newStageId,
             name: manifest.stage.name || 'Imported Classroom',
             description: manifest.stage.description,
+            education: parseEducationMetadata(manifest.stage.education),
             languageDirective: manifest.stage.language,
             style: manifest.stage.style,
             createdAt: manifest.stage.createdAt || now,
@@ -521,6 +523,13 @@ export function useImportClassroom(onSuccess?: (importedStageId: string) => void
           { mode: 'replace' },
         );
         importCommitted = true;
+        try {
+          await restoreImportedReview(document.stage, document.scenes, manifest.stage.review);
+        } catch {
+          toast.warning(
+            'Classroom imported, but the local review notes could not be saved. The review remains unapproved.',
+          );
+        }
         setPhase('done');
       } catch (error) {
         log.error('Classroom ZIP import failed:', error);

@@ -100,11 +100,20 @@ export interface UploadedDocument {
  */
 export interface UserRequirements {
   requirement: string; // Single free-form text for all user input
+  courseType?: 'investment' | 'general';
   userNickname?: string; // Student nickname for personalization
   userBio?: string; // Student background for personalization
   webSearch?: boolean; // Enable web search for richer context
+  requireResearch?: boolean; // Investment starters must not generate without retrieved evidence
   interactiveMode?: boolean; // Enable Interactive Mode for interactive-first generation
   taskEngineMode?: boolean; // Enable vocational task-engine generation path
+}
+
+export interface ResearchEvidence {
+  researchContext?: string;
+  researchSources?: Array<{ title: string; url: string }>;
+  researchReceipt?: string;
+  researchRetrievedAt?: string;
 }
 
 // ==================== Stage 1 Output: Scene Outlines (Simplified) ====================

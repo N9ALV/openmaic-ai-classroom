@@ -223,8 +223,8 @@ export function GenerationToolbar({
 
   // ─── Pill button helper ─────────────────────────────
   const pillCls =
-    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap border';
-  const pillMuted = `${pillCls} border-border/50 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60`;
+    'inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-all cursor-pointer select-none whitespace-nowrap border';
+  const pillMuted = `${pillCls} border-border text-foreground hover:bg-muted/60`;
   const pillActive = `${pillCls} border-violet-200/60 dark:border-violet-700/50 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300`;
 
   return (
@@ -280,7 +280,7 @@ export function GenerationToolbar({
                 </span>
               </button>
             ) : (
-              <button className={pillMuted}>
+              <button className={pillMuted} aria-label={t('toolbar.courseMaterialUpload')}>
                 <Paperclip className="size-3.5" />
               </button>
             )}
@@ -296,7 +296,10 @@ export function GenerationToolbar({
                 onValueChange={(v) => setPDFProvider(v as PDFProviderId)}
                 disabled={materialsLocked}
               >
-                <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                <SelectTrigger
+                  aria-label={t('toolbar.documentExtractor')}
+                  className="min-h-11 text-sm flex-1 min-w-0"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -347,6 +350,16 @@ export function GenerationToolbar({
               />
               <div className="space-y-3">
                 <div
+                  role="button"
+                  tabIndex={materialsLocked ? -1 : 0}
+                  aria-label={t('toolbar.courseMaterialUpload')}
+                  aria-disabled={materialsLocked}
+                  onKeyDown={(event) => {
+                    if (!materialsLocked && (event.key === 'Enter' || event.key === ' ')) {
+                      event.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                   className={cn(
                     'flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 transition-colors',
                     isDragging
@@ -431,7 +444,10 @@ export function GenerationToolbar({
         {webSearchAvailable ? (
           <Popover>
             <PopoverTrigger asChild>
-              <button className={webSearch ? pillActive : pillMuted}>
+              <button
+                aria-label="Web search settings"
+                className={webSearch ? pillActive : pillMuted}
+              >
                 <Globe2 className={cn('size-3.5', webSearch && 'animate-pulse')} />
                 {webSearch && (
                   <span>
@@ -484,7 +500,10 @@ export function GenerationToolbar({
                   value={webSearchProviderId}
                   onValueChange={(v) => setWebSearchProvider(v as WebSearchProviderId)}
                 >
-                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                  <SelectTrigger
+                    aria-label={t('toolbar.webSearchProvider')}
+                    className="min-h-11 text-sm flex-1 min-w-0"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -516,6 +535,7 @@ export function GenerationToolbar({
             <TooltipTrigger asChild>
               <button
                 className={cn(pillCls, 'text-muted-foreground/40 cursor-not-allowed')}
+                aria-label="Web search settings"
                 disabled
               >
                 <Globe2 className="size-3.5" />

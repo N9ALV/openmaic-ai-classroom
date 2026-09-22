@@ -26,6 +26,7 @@ import type { AICallFn } from '@openmaic/generation';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
+import { issueResearchReceipt } from '@/lib/server/investment-research-receipt';
 
 const log = createLogger('WebSearch');
 
@@ -171,6 +172,12 @@ export async function POST(req: NextRequest) {
         : {}),
     });
     const context = formatSearchResultsAsContext(result);
+    let receipt: { researchReceipt: string; retrievedAt: string } | undefined;
+    try {
+      receipt = issueResearchReceipt(query, context, result.sources);
+    } catch {
+      /* Empty results remain readable, but cannot authorise investment generation. */
+    }
 
     return apiSuccess({
       answer: result.answer,
@@ -178,6 +185,7 @@ export async function POST(req: NextRequest) {
       context,
       query: result.query,
       responseTime: result.responseTime,
+      ...receipt,
     });
   } catch (err) {
     log.error(`Web search failed [query="${query?.substring(0, 60) ?? 'unknown'}"]:`, err);

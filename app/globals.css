@@ -17,6 +17,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.pilot-home :is(button, a, input, textarea, select):focus-visible,
+.learning-surface :is(button, a, input, textarea, select, summary):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pilot-home *,
+  .learning-surface * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

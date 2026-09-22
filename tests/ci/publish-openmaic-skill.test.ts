@@ -98,7 +98,10 @@ function expectFailure(result: ReturnType<typeof runPublish>['result'], message:
   expect(result.stderr).toBe(`::error::${message}\n`);
 }
 
-describe('publish-openmaic-skill shell contract', () => {
+// This is a POSIX shell/toolchain contract, exercised by the existing Linux
+// and macOS CI jobs. Windows has no /bin/bash or executable chmod semantics;
+// report it as unsupported here, not as a product test pass.
+describe.skipIf(process.platform === 'win32')('publish-openmaic-skill shell contract', () => {
   it('performs a real publish with no positional argument under macOS Bash 3.2', () => {
     const { calls, result } = runPublish();
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { classroomReviewSnapshot, classroomEvidenceText } from '@/lib/learning/classroom-review';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import { useStageStore } from '@/lib/store/stage';
@@ -137,6 +138,8 @@ export async function buildClassroomExportZip(
     const manifestStage: ManifestStage = {
       name: latestName,
       description: exportStage.description,
+      education: exportStage.education,
+      review: await classroomReviewSnapshot(exportStage, exportScenes),
       language: exportStage.languageDirective,
       style: exportStage.style,
       videoManifest: exportStage.videoManifest,
@@ -226,6 +229,13 @@ export async function buildClassroomExportZip(
     };
 
     zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+    if (exportStage.education || manifestStage.review) {
+      zip.file(
+        'education-review.json',
+        JSON.stringify({ evidence: exportStage.education, review: manifestStage.review }, null, 2),
+      );
+      zip.file('SOURCES-AND-REVIEW.txt', classroomEvidenceText(exportStage, manifestStage.review));
+    }
 
     // 10. Add media blobs to ZIP
     for (const af of audioFiles) {

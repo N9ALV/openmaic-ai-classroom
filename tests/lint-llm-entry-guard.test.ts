@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { ESLint } from 'eslint';
 
 /**
@@ -60,6 +60,12 @@ const EXEMPT_PATHS = ['lib/ai/llm', 'eval/probe', 'tests/probe'] as const;
 const EXTENSIONS = ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs'] as const;
 
 const eslint = new ESLint({ cwd: process.cwd() });
+
+// Loading the TypeScript/Next lint plugins is setup, not part of a guard
+// assertion's deadline. Keep every scope/extension assertion below unchanged.
+beforeAll(async () => {
+  await eslint.lintText('export const setupProbe = 1;', { filePath: 'lib/probe.ts' });
+}, 120_000);
 
 async function errorsFor(filePath: string, code: string): Promise<string[]> {
   // A path ESLint would ignore (build output, vendored trees) returns no result;

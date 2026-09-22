@@ -1,3 +1,5 @@
+import { INVESTMENT_RESEARCH_MARKER } from './investment-research';
+
 export interface InvestmentStarterPrompt {
   id: string;
   title: string;
@@ -16,6 +18,8 @@ const OFFICIAL_AUSTRALIAN_SOURCES = [
 const COMMON_COURSE_REQUIREMENTS = `
 
 Course requirements:
+- Write in Australian English. These are editorial drafts, not approved lessons.
+- Cite only material actually retrieved or supplied. A suggested URL is not evidence that you accessed it. Do not invent quotations, source dates or verified claims.
 - This is general educational content, not personal financial advice. Do not recommend a specific security, fund, broker or strategy as suitable for the learner.
 - Start with learning objectives and assumptions, then build 8–12 concise scenes with at least one worked example, one interactive activity and a final knowledge check.
 - Explain the realistic alternative, including doing nothing or using a simpler diversified approach.
@@ -37,7 +41,8 @@ function buildPrompt(
     .map((source) => `- ${source}`)
     .join('\n');
 
-  return `Create an Australian investment-education classroom titled “${topic}”.
+  return `${INVESTMENT_RESEARCH_MARKER}
+Create an Australian investment-education classroom titled “${topic}”.
 
 Learning goals:
 ${goals}${COMMON_COURSE_REQUIREMENTS}

@@ -3,6 +3,11 @@ import sanitizeHtml from 'sanitize-html';
 const SAFE_STYLE_VALUE =
   /^(?!.*(?:url\s*\(|expression\s*\(|javascript\s*:|@import|behavior\s*:|-moz-binding))[#(),.%+\-*/\w\s]+$/i;
 
+// Font names are text, not general CSS expressions. Preserve the editor's
+// quoted families and international names, without permitting escapes, URLs,
+// functions, declaration separators or control characters.
+const SAFE_FONT_FAMILY = /^[\p{L}\p{N}\p{M}_ ,'"-]+$/u;
+
 /**
  * Sanitise model-authored and imported rich text before it reaches React's
  * innerHTML boundary. The allow-list mirrors the editor's text schema while
@@ -50,7 +55,7 @@ export function sanitizeRichTextHtml(value: unknown): string {
         'box-sizing': [SAFE_STYLE_VALUE],
         color: [SAFE_STYLE_VALUE],
         display: [SAFE_STYLE_VALUE],
-        'font-family': [SAFE_STYLE_VALUE],
+        'font-family': [SAFE_FONT_FAMILY],
         'font-size': [SAFE_STYLE_VALUE],
         'font-style': [SAFE_STYLE_VALUE],
         'font-weight': [SAFE_STYLE_VALUE],

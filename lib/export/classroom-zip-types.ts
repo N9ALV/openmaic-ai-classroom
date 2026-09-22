@@ -6,6 +6,8 @@ import type {
   VideoManifest,
 } from '@/lib/types/stage';
 import type { Action } from '@/lib/types/action';
+import type { Stage } from '@/lib/types/stage';
+import type { EducationReview } from '@/lib/learning/review';
 import type { AgentVoiceConfig, Slide, VoiceDesign } from '@openmaic/dsl';
 
 export const CLASSROOM_ZIP_FORMAT_VERSION = 1;
@@ -24,6 +26,8 @@ export interface ClassroomManifest {
 export interface ManifestStage {
   name: string;
   description?: string;
+  education?: Stage['education'];
+  review?: EducationReview;
   language?: string;
   style?: string;
   videoManifest?: VideoManifest;

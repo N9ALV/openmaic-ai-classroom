@@ -7,6 +7,21 @@ simple Windows launcher.
 
 **Start here:**
 
+- [Beginner orientation: use it, then explain it](ORIENTATION.md)
+- [Beginner quick guide](BEGINNER-QUICK-GUIDE.md)
+- [Orientation progress and resume point](ORIENTATION-PROGRESS.md)
+- Built-in reading library: open `/learn` in the local app. Six complete draft
+  lessons, eighteen self-checks, four arithmetic exercises and PDF workbooks need
+  no API key or model call. These are not the same as AI generation briefs.
+- [22 September improvements and verification](ENHANCEMENTS-2026-09-22.md)
+- [Earlier local delivery review](DELIVERY-REVIEW.md)
+
+Choose **Start learning** on the homepage. Each lesson has its own page,
+Previous/Next navigation, a worked scenario, optional remembered answers and
+local completion/resume controls. Progress and review records remain in this
+browser on this device; shared accounts, storage architecture and spending
+controls are deferred for a separate decision.
+
 - [Pilot status, safeguards and acceptance test](PRODUCTION-PILOT.md)
 - [ASX Investing Basics sample PowerPoint](ASX%20Investing%20Basics.pptx)
 - [Content-quality review of the sample](SAMPLE-CONTENT-REVIEW.md)
@@ -18,6 +33,14 @@ keys, populated environment files, access codes or private learner material.
 
 The customised code is based on upstream OpenMAIC v1.0.0 and retains the
 upstream MIT licence and third-party notices described below.
+
+### Running this pilot
+
+Use the `production-pilot` branch of **this repository**, not a fresh upstream
+checkout, when reproducing the custom features. Keep your original exports and
+browser data. Follow [PRODUCTION-PILOT.md](PRODUCTION-PILOT.md) before sharing a
+deployment. The upstream documentation below describes upstream features and
+does not certify the pilot for public deployment.
 
 ---
 

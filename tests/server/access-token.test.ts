@@ -11,6 +11,7 @@ describe('access token signing', () => {
 
     expect(verifyAccessToken(token, 'demo-code')).toBe(true);
     expect(verifyAccessToken(token, 'other-code')).toBe(false);
+    expect(verifyAccessToken(`${token}invalid-hex-suffix`, 'demo-code')).toBe(false);
     expect(verifyAccessToken('bad-token', 'demo-code')).toBe(false);
 
     vi.useRealTimers();

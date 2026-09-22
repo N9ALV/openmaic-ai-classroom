@@ -23,6 +23,8 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
   const timestamp = token.substring(0, dotIndex);
   const signature = token.substring(dotIndex + 1);
 
+  if (!/^[a-f0-9]{64}$/.test(signature)) return false;
+
   if (!isAccessTokenTimestampValid(timestamp)) return false;
 
   const keyData = encode(accessCode);
@@ -48,6 +50,25 @@ async function verifyToken(token: string, accessCode: string): Promise<boolean> 
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // SameSite cookies and CORS alone do not prevent a hostile site sending a
+  // text/plain POST to a local JSON endpoint. Reject cross-site mutations
+  // before reading credentials or invoking billable services. Non-browser
+  // clients without Origin still need the normal access-code gate below.
+  if (pathname.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    const crossSite = request.headers.get('sec-fetch-site') === 'cross-site';
+    if (crossSite || (origin !== null && origin !== request.nextUrl.origin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          errorCode: 'INVALID_REQUEST',
+          error: 'Requests must come from this OpenMAIC site.',
+        },
+        { status: 403 },
+      );
+    }
+  }
 
   // Return an actual server-side 404 when either half of the workbench is off.
   // Edge middleware cannot reliably inspect server-only deployment variables,

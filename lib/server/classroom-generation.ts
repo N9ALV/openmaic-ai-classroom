@@ -1,4 +1,8 @@
 import { nanoid } from 'nanoid';
+import {
+  assertInvestmentResearch,
+  requiresInvestmentResearch,
+} from '@/lib/home/investment-research';
 import { callLLM } from '@/lib/ai/llm';
 import { createStageAPI } from '@/lib/api/stage-api';
 import type { StageStore } from '@/lib/api/stage-api-types';
@@ -47,6 +51,7 @@ export function containPBLGenerationError(error: unknown, sceneTitle: string): n
 
 export interface GenerateClassroomInput {
   requirement: string;
+  courseType?: 'investment' | 'general';
   pdfContent?: { text: string; images: string[] };
   enableWebSearch?: boolean;
   webSearchProviderId?: WebSearchProviderId;
@@ -400,6 +405,7 @@ export async function generateClassroom(
 
   const requirements: UserRequirements = {
     requirement,
+    courseType: input.courseType,
   };
   const vocationalActive = resolveVocationalActive(requirements);
   const pdfText = pdfContent?.text || undefined;
@@ -413,7 +419,9 @@ export async function generateClassroom(
 
   // Web search (optional, graceful degradation)
   let researchContext: string | undefined;
-  if (input.enableWebSearch) {
+  let researchSources: Array<{ title: string; url: string }> = [];
+  let researchRetrievedAt: string | undefined;
+  if (input.enableWebSearch || requiresInvestmentResearch(requirements)) {
     const webSearchConfig = resolveClassroomWebSearchConfig(input);
     if (webSearchConfig) {
       // Re-resolve the query-rewrite model only when explicitly routed. If
@@ -453,6 +461,8 @@ export async function generateClassroom(
           claudeModelId: webSearchConfig.claudeModelId,
         });
         researchContext = formatSearchResultsAsContext(searchResult);
+        researchSources = searchResult.sources.map(({ title, url }) => ({ title, url }));
+        researchRetrievedAt = new Date().toISOString();
         if (researchContext) {
           log.info(`Web search returned ${searchResult.sources.length} sources`);
         }
@@ -464,6 +474,7 @@ export async function generateClassroom(
     }
   }
 
+  assertInvestmentResearch(requirements, researchContext, researchSources);
   await options.onProgress?.({
     step: 'generating_outlines',
     progress: 15,
@@ -524,6 +535,18 @@ export async function generateClassroom(
     id: stageId,
     name: courseTitle || outlines[0]?.title || requirement.slice(0, 50),
     description: undefined,
+    ...(requiresInvestmentResearch(requirements)
+      ? {
+          education: {
+            courseType: 'investment' as const,
+            requirement,
+            researchContext: researchContext || '',
+            sources: researchSources,
+            retrievedAt: researchRetrievedAt,
+            generatedAt: new Date().toISOString(),
+          },
+        }
+      : {}),
     languageDirective,
     videoManifest: buildVideoManifestFromOutlines(outlines),
     style: 'interactive',

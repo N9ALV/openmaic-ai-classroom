@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { classroomReviewSnapshot, classroomEvidenceText } from '@/lib/learning/classroom-review';
 import pptxgen from 'pptxgenjs';
 import tinycolor from 'tinycolor2';
 import { saveAs } from 'file-saver';
@@ -502,6 +503,7 @@ export async function buildPptxBlob(
   ratioPx2Inch: number,
   ratioPx2Pt: number,
   stageId?: string,
+  educationNotice?: string,
 ): Promise<Blob> {
   const pptx = new pptxgen();
   const documentElements = slides.flatMap((slide) => slide.elements);
@@ -524,6 +526,33 @@ export async function buildPptxBlob(
   if (viewportRatio === 0.625) pptx.layout = 'LAYOUT_16x10';
   else if (viewportRatio === 0.75) pptx.layout = 'LAYOUT_4x3';
   else pptx.layout = 'LAYOUT_16x9';
+
+  if (educationNotice) {
+    pptx.subject = educationNotice.split('\n')[0];
+    const lines = educationNotice.split('\n').flatMap((text) => text.match(/.{1,85}/g) ?? ['']);
+    for (let offset = 0; offset < lines.length; offset += 22) {
+      const notice = pptx.addSlide();
+      notice.addText('Sources and review record', {
+        x: 0.5,
+        y: 0.35,
+        w: 9,
+        h: 0.5,
+        fontSize: 22,
+        bold: true,
+        color: '163569',
+      });
+      notice.addText(lines.slice(offset, offset + 22).join('\n'), {
+        x: 0.5,
+        y: 1,
+        w: 9,
+        h: 5.7,
+        fontSize: 12,
+        color: '222222',
+        breakLine: false,
+      });
+      notice.addNotes(educationNotice);
+    }
+  }
 
   for (let slideIdx = 0; slideIdx < slides.length; slideIdx++) {
     const slide = slides[slideIdx];
@@ -1252,6 +1281,7 @@ export async function buildResourcePackZip(
     fileName: string;
     /** Called only when `slides.length > 0`; produces the PPTX blob. */
     getPptxBlob: () => Promise<Blob>;
+    educationNotice?: string;
     /** Passed through to `inlineHtmlAssets`; tests inject a no-op fetcher. */
     fetcher?: FetchAsset;
   },
@@ -1259,6 +1289,7 @@ export async function buildResourcePackZip(
   const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
   const failedAssetUrls: string[] = [];
+  if (opts.educationNotice) zip.file('SOURCES-AND-REVIEW.txt', opts.educationNotice);
 
   // 1. Add interactive HTML pages (independent of slides)
   let interactiveIndex = 0;
@@ -1353,6 +1384,9 @@ export function useExportPPTX() {
         ratioPx2Inch,
         ratioPx2Pt,
         stage?.id,
+        stage?.education
+          ? classroomEvidenceText(stage, await classroomReviewSnapshot(stage, scenes))
+          : undefined,
       );
       saveAs(blob, `${fileName}.pptx`);
       toast.success(t('export.exportSuccess'));
@@ -1362,6 +1396,7 @@ export function useExportPPTX() {
     slides,
     slideScenes,
     stage,
+    scenes,
     viewportSize,
     viewportRatio,
     ratioPx2Inch,
@@ -1376,6 +1411,9 @@ export function useExportPPTX() {
     withExportGuard(async () => {
       const fileName = stage?.name || 'slides';
       const sharedFetcher = createAssetFetcher({ fetchImpl: createProxiedFetch() });
+      const educationNotice = stage?.education
+        ? classroomEvidenceText(stage, await classroomReviewSnapshot(stage, scenes))
+        : undefined;
 
       const result = await buildResourcePackZip(scenes, slides, slideScenes, {
         viewportRatio,
@@ -1384,6 +1422,7 @@ export function useExportPPTX() {
         ratioPx2Pt,
         fileName,
         fetcher: sharedFetcher,
+        educationNotice,
         getPptxBlob: () =>
           buildPptxBlob(
             slides,
@@ -1393,6 +1432,7 @@ export function useExportPPTX() {
             ratioPx2Inch,
             ratioPx2Pt,
             stage?.id,
+            educationNotice,
           ),
       });
 

@@ -80,7 +80,7 @@ export function SpeechButton({
   };
 
   const isMd = size === 'md';
-  const sizeClasses = isMd ? 'h-8 w-8' : 'h-6 w-6';
+  const sizeClasses = isMd ? 'h-11 w-11' : 'h-6 w-6';
   const iconSize = isMd ? 'w-4 h-4' : 'w-3.5 h-3.5';
   const barH = isMd ? 14 : 10;
 
@@ -89,6 +89,13 @@ export function SpeechButton({
       <TooltipTrigger asChild>
         <button
           type="button"
+          aria-label={
+            isProcessing
+              ? t('roundtable.processing')
+              : isRecording
+                ? t('voice.stopListening')
+                : t('voice.startListening')
+          }
           disabled={isDisabled || isProcessing}
           onClick={handleClick}
           className={cn(

@@ -172,6 +172,10 @@ export default function ClassroomDetailPage() {
       >;
       const finishResume = (imageMapping: Record<string, string>) =>
         generateRemaining({
+          requirements: params.requirements,
+          researchContext: params.researchContext,
+          researchSources: params.researchSources,
+          researchReceipt: params.researchReceipt,
           pdfImages: params.pdfImages,
           imageMapping,
           stageInfo: {

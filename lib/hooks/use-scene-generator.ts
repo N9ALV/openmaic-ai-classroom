@@ -11,6 +11,7 @@ import type {
   PdfImage,
   ImageMapping,
   UserRequirements,
+  ResearchEvidence,
 } from '@/lib/types/generation';
 import type { AgentInfo } from '@openmaic/generation';
 import type { Scene } from '@/lib/types/stage';
@@ -141,7 +142,7 @@ function errorMeta(error: unknown): Pick<SceneContentResult, 'errorCode' | 'stat
 
 /** Call POST /api/generate/scene-content (step 1) */
 export async function fetchSceneContent(
-  params: {
+  params: ResearchEvidence & {
     outline: SceneOutline;
     allOutlines: SceneOutline[];
     stageId: string;
@@ -166,7 +167,7 @@ export async function fetchSceneContent(
         const response = await fetch('/api/generate/scene-content', {
           method: 'POST',
           headers: getApiHeaders(),
-          body: JSON.stringify(withThinkingConfig(params)),
+          body: JSON.stringify(withThinkingConfig({ ...params })),
           signal,
         });
 
@@ -600,7 +601,8 @@ export interface UseSceneGeneratorOptions {
   onComplete?: () => void;
 }
 
-export interface GenerationParams {
+export interface GenerationParams extends ResearchEvidence {
+  requirements?: UserRequirements;
   pdfImages?: PdfImage[];
   imageMapping?: ImageMapping;
   stageInfo: {
@@ -711,6 +713,14 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
               outline,
               allOutlines: outlines,
               stageId: stage.id,
+              requirements:
+                params.requirements ??
+                (stage.education
+                  ? { courseType: 'investment', requirement: stage.education.requirement }
+                  : undefined),
+              researchContext: params.researchContext,
+              researchSources: params.researchSources,
+              researchReceipt: params.researchReceipt,
               pdfImages: params.pdfImages,
               imageMapping: params.imageMapping,
               stageInfo: params.stageInfo,
@@ -959,6 +969,14 @@ export function useSceneGenerator(options: UseSceneGeneratorOptions = {}) {
             outline,
             allOutlines: state.outlines,
             stageId: state.stage.id,
+            requirements:
+              params.requirements ??
+              (state.stage.education
+                ? { courseType: 'investment', requirement: state.stage.education.requirement }
+                : undefined),
+            researchContext: params.researchContext,
+            researchSources: params.researchSources,
+            researchReceipt: params.researchReceipt,
             pdfImages: params.pdfImages,
             imageMapping: params.imageMapping,
             stageInfo: params.stageInfo,

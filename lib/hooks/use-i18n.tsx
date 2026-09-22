@@ -31,6 +31,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const locale = (i18n.language || defaultLocale) as Locale;
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   // Detect language after hydration to avoid SSR mismatch.
   // i18next handles fallback automatically: if the detected language
   // has no matching JSON file, it falls back to fallbackLng.

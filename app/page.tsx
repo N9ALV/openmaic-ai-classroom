@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { LearningResume } from '@/components/learning/learning-resume';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowUp,
@@ -75,6 +77,8 @@ import { FolderCard } from '@/components/discovery/folder-card';
 import { NewFolderDialog } from '@/components/discovery/folder-dialogs';
 import { MoveToFolderMenu } from '@/components/discovery/move-to-folder-menu';
 import { InvestmentStarterPack } from '@/components/discovery/investment-starter-pack';
+import { isInvestmentBrief, INVESTMENT_RESEARCH_MESSAGE } from '@/lib/home/investment-research';
+import { WEB_SEARCH_PROVIDERS, isWebSearchProviderConfigured } from '@/lib/web-search/constants';
 import { SlideThumbnail } from '@/components/slide-renderer/SlideThumbnail';
 import type { Slide } from '@openmaic/dsl';
 import { useMediaGenerationStore } from '@/lib/store/media-generation';
@@ -117,6 +121,7 @@ interface FormState {
   webSearch: boolean;
   interactiveMode: boolean;
   vocationalTestMode: boolean;
+  courseType: 'investment' | 'general';
 }
 
 const initialFormState: FormState = {
@@ -125,6 +130,7 @@ const initialFormState: FormState = {
   webSearch: false,
   interactiveMode: false,
   vocationalTestMode: false,
+  courseType: 'investment',
 };
 
 function HomePage() {
@@ -179,6 +185,13 @@ function HomePage() {
   // instead of inspecting modelId directly.
   const providersConfig = useSettingsStore((s) => s.providersConfig);
   const hasUsableProvider = hasUsableLLMProvider(providersConfig);
+  const researchAvailable = useSettingsStore((s) => {
+    const provider = WEB_SEARCH_PROVIDERS[s.webSearchProviderId];
+    return (
+      !!provider &&
+      isWebSearchProviderConfigured(provider, s.webSearchProvidersConfig?.[provider.id])
+    );
+  });
   const [recentOpen, setRecentOpen] = useState(true);
   const persistRecentOpen = (next: boolean) => {
     setRecentOpen(next);
@@ -256,6 +269,9 @@ function HomePage() {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const thumbnailsRef = useRef<Record<string, Slide>>({});
+  const [classroomLoadState, setClassroomLoadState] = useState<'loading' | 'ready' | 'failed'>(
+    'loading',
+  );
 
   const replaceThumbnails = (slides: Record<string, Slide>) => {
     const previous = thumbnailsRef.current;
@@ -277,19 +293,25 @@ function HomePage() {
   }, [themeOpen]);
 
   const loadClassrooms = async () => {
+    setClassroomLoadState('loading');
     try {
       const list = await listStages();
       setClassrooms(list);
-      // Load first slide thumbnails
-      if (list.length > 0) {
-        const slides = await getFirstSlideByStages(list.map((c) => c.id));
-        replaceThumbnails(slides);
-      } else {
-        replaceThumbnails({});
+      setClassroomLoadState('ready');
+      toast.dismiss('classroom-list-unavailable');
+      // A preview failure must not pretend the saved library itself is lost.
+      try {
+        if (list.length > 0) replaceThumbnails(await getFirstSlideByStages(list.map((c) => c.id)));
+        else replaceThumbnails({});
+      } catch (error) {
+        log.warn('Library loaded, but some previews were unavailable:', error);
       }
     } catch (err) {
+      setClassroomLoadState('failed');
       log.error('Failed to load classrooms:', err);
-      toast.error('Persistence is unavailable. Saved classrooms could not be loaded.');
+      toast.error('Persistence is unavailable. Saved classrooms could not be loaded.', {
+        id: 'classroom-list-unavailable',
+      });
     }
   };
 
@@ -578,6 +600,21 @@ function HomePage() {
       return;
     }
 
+    const needsResearch = form.courseType === 'investment' || isInvestmentBrief(form.requirement);
+    const researchSettings = useSettingsStore.getState();
+    const searchProvider = WEB_SEARCH_PROVIDERS[researchSettings.webSearchProviderId];
+    if (
+      needsResearch &&
+      (!searchProvider ||
+        !isWebSearchProviderConfigured(
+          searchProvider,
+          researchSettings.webSearchProvidersConfig?.[searchProvider.id],
+        ))
+    ) {
+      setError(INVESTMENT_RESEARCH_MESSAGE);
+      return;
+    }
+
     setError(null);
 
     // The material list and the extractor provider config are frozen for the
@@ -608,9 +645,11 @@ function HomePage() {
       const userProfile = useUserProfileStore.getState();
       const requirements: UserRequirements = {
         requirement: form.requirement,
+        courseType: form.courseType,
         userNickname: userProfile.nickname || undefined,
         userBio: userProfile.bio || undefined,
-        webSearch: form.webSearch || undefined,
+        webSearch: needsResearch || form.webSearch || undefined,
+        ...(needsResearch ? { requireResearch: true } : {}),
         interactiveMode: form.vocationalTestMode ? true : form.interactiveMode,
         ...(form.vocationalTestMode ? { taskEngineMode: true } : {}),
       };
@@ -694,7 +733,11 @@ function HomePage() {
     return date.toLocaleDateString();
   };
 
-  const canGenerate = !!form.requirement.trim() && hasUsableProvider;
+  const researchBlocked =
+    !!form.requirement.trim() &&
+    (form.courseType === 'investment' || isInvestmentBrief(form.requirement)) &&
+    !researchAvailable;
+  const canGenerate = !!form.requirement.trim() && hasUsableProvider && !researchBlocked;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -704,7 +747,10 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
+    <div
+      role="main"
+      className="pilot-home min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-24 md:p-8 md:pt-24 overflow-x-hidden"
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -734,6 +780,8 @@ function HomePage() {
         {/* Theme Selector */}
         <div className="relative">
           <button
+            aria-label="Choose colour theme"
+            aria-expanded={themeOpen}
             onClick={() => {
               setThemeOpen(!themeOpen);
             }}
@@ -796,6 +844,7 @@ function HomePage() {
         {/* Settings Button */}
         <div className="relative">
           <button
+            aria-label="Open settings"
             onClick={() => setSettingsOpen(true)}
             className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 hover:shadow-sm transition-all group"
           >
@@ -824,12 +873,51 @@ function HomePage() {
         />
       </div>
 
-      {/* ═══ Hero section: title + input (centered, wider) ═══ */}
+      <section
+        className="relative z-20 w-full max-w-[800px] rounded-2xl border bg-card p-5 sm:p-7"
+        aria-labelledby="learning-home-title"
+      >
+        <p className="text-sm font-semibold text-foreground">
+          Australian investment education · OpenMAIC pilot
+        </p>
+        <h1 id="learning-home-title" className="mt-2 text-3xl font-bold tracking-tight">
+          Learn investing, one step at a time
+        </h1>
+        <p className="mt-3 text-base leading-relaxed">
+          Start with ready-made lessons, practise with fictional examples and check your
+          understanding.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/learn"
+            className="rounded-lg bg-blue-700 px-5 py-3 text-base font-semibold text-white hover:bg-blue-800"
+          >
+            Start learning
+          </Link>
+          <a
+            href="#classroom-builder"
+            className="rounded-lg border px-5 py-3 text-base font-semibold underline"
+            onClick={() => requestAnimationFrame(() => textareaRef.current?.focus())}
+          >
+            Create a lesson with AI
+          </a>
+        </div>
+        <p className="mt-3 text-sm text-foreground">
+          Built-in lessons need no AI key. AI creation may use provider credit. All lessons begin as
+          educational drafts.
+        </p>
+        <LearningResume />
+      </section>
+
+      {/* ═══ AI classroom builder ═══ */}
       <motion.div
+        id="classroom-builder"
         initial={heroEnter({ opacity: 0, y: 20 })}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={cn('relative z-20 w-full max-w-[800px] flex flex-col items-center mt-[10vh]')}
+        className={cn(
+          'relative z-20 w-full max-w-[800px] flex flex-col items-center mt-10 scroll-mt-20',
+        )}
       >
         {/* ── Logo ── */}
         <div className="relative" data-pro-morph="lockup">
@@ -861,10 +949,24 @@ function HomePage() {
           initial={heroEnter({ opacity: 0 })}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
-          className="text-sm text-muted-foreground/60 mb-8"
+          className="text-base text-foreground mb-5"
         >
-          {t('home.slogan')}
+          Create a draft lesson from your topic and source material.
         </motion.p>
+        <h2 className="mb-3 text-xl font-semibold">AI classroom builder</h2>
+        <label className="mb-4 flex w-full flex-wrap items-center gap-3 text-base">
+          Lesson type
+          <select
+            className="min-h-11 rounded-lg border bg-background px-3 py-2"
+            value={form.courseType}
+            onChange={(event) =>
+              updateForm('courseType', event.target.value as FormState['courseType'])
+            }
+          >
+            <option value="investment">Investment education — sources required</option>
+            <option value="general">Other education</option>
+          </select>
+        </label>
 
         {/* ── Unified input area ── */}
         <motion.div
@@ -888,8 +990,9 @@ function HomePage() {
             {/* Textarea */}
             <textarea
               ref={textareaRef}
-              placeholder={t('upload.requirementPlaceholder')}
-              className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
+              aria-label="What would you like to learn?"
+              placeholder="For example: Explain why a 20% investment loss needs a 25% gain to recover, using a simple Australian-dollar example."
+              className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-base leading-relaxed placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 min-h-[140px] max-h-[300px]"
               value={form.requirement}
               onChange={(e) => updateForm('requirement', e.target.value)}
               onKeyDown={handleKeyDown}
@@ -897,7 +1000,7 @@ function HomePage() {
             />
 
             {/* Toolbar row */}
-            <div className="px-3 pb-3 flex items-end gap-2">
+            <div className="px-3 pb-3 flex flex-wrap items-end gap-2">
               <div className="flex-1 min-w-0">
                 <GenerationToolbar
                   webSearch={form.webSearch}
@@ -945,13 +1048,13 @@ function HomePage() {
                 onClick={handleGenerate}
                 disabled={!canGenerate || preparingGenerate}
                 className={cn(
-                  'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
+                  'shrink-0 min-h-11 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
                   canGenerate && !preparingGenerate
                     ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm cursor-pointer'
                     : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
                 )}
               >
-                <span className="text-xs font-medium">
+                <span className="text-base font-medium">
                   {preparingGenerate ? t('stage.generating') : t('toolbar.enterClassroom')}
                 </span>
                 {preparingGenerate ? (
@@ -966,11 +1069,31 @@ function HomePage() {
 
         <InvestmentStarterPack
           currentRequirement={form.requirement}
+          researchAvailable={researchAvailable}
           onSelect={(prompt) => {
             updateForm('requirement', prompt);
+            updateForm('courseType', 'investment');
+            if (researchAvailable) updateForm('webSearch', true);
             requestAnimationFrame(() => textareaRef.current?.focus());
           }}
         />
+        {researchBlocked && (
+          <p role="status" className="mt-3 text-sm text-amber-800 dark:text-amber-200">
+            {INVESTMENT_RESEARCH_MESSAGE}
+          </p>
+        )}
+        {researchBlocked && (
+          <button
+            type="button"
+            className="mt-2 rounded-lg border px-3 py-2 text-sm"
+            onClick={() => {
+              setSettingsSection('web-search');
+              setSettingsOpen(true);
+            }}
+          >
+            Open Web Search settings
+          </button>
+        )}
 
         {showVocationalTestUi && (
           <motion.div
@@ -1036,6 +1159,26 @@ function HomePage() {
       </motion.div>
 
       {/* ═══ Recent classrooms — collapsible ═══ */}
+      {classroomLoadState === 'failed' && (
+        <section
+          role="alert"
+          className="mt-6 w-full max-w-4xl rounded-lg border border-amber-500/50 bg-amber-500/10 p-4"
+        >
+          <h2 className="font-semibold">Saved classrooms could not be loaded</h2>
+          <p className="my-2 text-sm">
+            This does not mean they were deleted. Keep your original classroom tab open and do not
+            clear browser data. Retry loading; if it persists, check storage access or the server
+            connection. Existing displayed items may be out of date.
+          </p>
+          <button
+            type="button"
+            className="rounded-lg border px-3 py-2 text-sm"
+            onClick={() => void loadClassrooms()}
+          >
+            Retry saved classrooms
+          </button>
+        </section>
+      )}
       {/* The library action bar is always present after hydration: it carries
           the New-folder / import / search actions, so a brand-new user with
           zero courses and zero folders can still create the first folder or
@@ -1071,7 +1214,11 @@ function HomePage() {
                   </>
                 )}
                 <span className="text-[11px] tabular-nums opacity-60">
-                  {currentFolder ? currentFolderClassrooms.length : classrooms.length}
+                  {classroomLoadState === 'failed'
+                    ? 'Unavailable'
+                    : currentFolder
+                      ? currentFolderClassrooms.length
+                      : classrooms.length}
                 </span>
                 <motion.div
                   animate={{ rotate: recentOpen ? 180 : 0 }}

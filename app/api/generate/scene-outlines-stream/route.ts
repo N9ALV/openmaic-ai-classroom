@@ -14,6 +14,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import { assertServerInvestmentResearch } from '@/lib/server/investment-research-receipt';
 import { streamLLM } from '@/lib/ai/llm';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
 import {
@@ -289,6 +290,15 @@ export async function POST(req: NextRequest) {
   let resolvedModelString: string | undefined;
   try {
     const body = await req.json();
+    try {
+      assertServerInvestmentResearch(body.requirements, body);
+    } catch (error) {
+      return apiError(
+        'INVALID_REQUEST',
+        400,
+        error instanceof Error ? error.message : 'Research is required.',
+      );
+    }
 
     // Get API configuration from request headers/body
     const {

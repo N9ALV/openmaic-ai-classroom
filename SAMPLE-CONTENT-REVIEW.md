@@ -54,8 +54,10 @@ potentially stale, and some risk wording could mislead a beginner.
   every LIC is actively managed in the same way.
 - Use the Australian term **A-REIT** and explain that some are diversified while
   others concentrate in one sector or a few assets.
-- Remove `mFunds`. ASX no longer lists it among current investor investment
-  options, so presenting it as a normal available ASX vehicle is likely stale.
+- Verify the current mFund service status directly with ASX before retaining
+  this reference. Its availability was not established in this review; absence
+  from a navigation menu alone is not proof of closure. Do not publish an
+  unverified list of currently available products.
 
 ### Slide 5 — Fundamental versus technical analysis
 

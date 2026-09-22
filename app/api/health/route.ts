@@ -8,10 +8,12 @@ import {
   getServerTTSProviders,
 } from '@/lib/server/provider-config';
 
-const version = process.env.npm_package_version || packageInfo.version;
+const version = packageInfo.version;
 
 export async function GET() {
   return apiSuccess({
+    service: 'openmaic',
+    check: 'liveness',
     status: 'ok',
     version,
     capabilities: {

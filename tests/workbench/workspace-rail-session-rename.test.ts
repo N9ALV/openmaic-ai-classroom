@@ -40,7 +40,7 @@ const roots: Root[] = [];
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-beforeAll(() => {
+beforeAll(async () => {
   if (!globalThis.PointerEvent) vi.stubGlobal('PointerEvent', MouseEvent);
   vi.stubGlobal(
     'ResizeObserver',
@@ -50,7 +50,10 @@ beforeAll(() => {
       disconnect() {}
     },
   );
-});
+  // Warm the large UI graph before a timed render. A transform timeout during
+  // mount leaves an outstanding act() which contaminates following assertions.
+  await import('@/components/workbench/workspace/WorkspaceRail');
+}, 120_000);
 
 afterEach(() => {
   for (const root of roots.splice(0)) {

@@ -193,11 +193,15 @@ function baseToolOpts(events: StatelessEvent[]) {
 }
 
 describe('Pi call_agent JSON action output', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
     mocks.buildAgent.mockReset();
     mocks.childPrompts.length = 0;
-  });
+    // Compile the large dependency graph before timing the actual behavioural
+    // test. A cold Windows/OneDrive transform must not time out midway through
+    // a turn and leave its mock subscription running into the following test.
+    await import('@/lib/chat/pi/tools/call-agent');
+  }, 120_000);
 
   it('attaches the same request-scoped selected-element evidence to every Legacy delegation', async () => {
     mockChildWithJsonOutput(JSON.stringify([{ type: 'text', content: '基于所选元素回答。' }]));

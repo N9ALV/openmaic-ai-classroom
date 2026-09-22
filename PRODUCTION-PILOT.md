@@ -11,13 +11,41 @@ manual content review and regular exports/backups.
 
 ## What this pilot adds
 
+- `/learn`: six complete reading lessons, eighteen local self-check questions,
+  four arithmetic exercises and PDF/text workbook downloads, with no API key or
+  live model call required. Every lesson is visibly an editorial draft.
+- A learner-first home screen, individual lesson routes, local resume/completion,
+  optional remembered answers, applied scenarios and a plain-language glossary.
+- Local claim-by-claim reviewer records with Draft → Reviewed → Approved steps.
+  Changed content and overdue reviews invalidate the effective approval. These
+  are self-declared local records, not authenticated certifications or IU approval.
+- Retrieved context, source routes and generation metadata travel with newly
+  generated investment classrooms. Classroom ZIP and PowerPoint exports retain
+  evidence/status; imported review notes require a fresh local check.
 - Six preinstalled Australian investment-learning briefs on the home page.
 - Prompts that require primary-source checks, dated claims, downside analysis,
   realistic costs, tax, liquidity and AUD/USD treatment.
-- Australian English as the first-run language.
+- English as the first-run interface language (the inherited catalogue is en-US).
+  Newly authored educational content and course briefs use Australian spelling.
 - Seven-day expiry for shared access-code sessions.
 - Baseline security headers.
 - Node-only startup registration isolated from the Edge bundle.
+- Source-retrieval gating for those AI briefs: research is enabled when a usable
+  selected provider exists, and generation stops if source material is empty.
+  A built-in keyless search route may be available; no API key does not by
+  itself prove that research is unavailable. Retrieval is not editorial approval.
+- Server-side investment outline/content guards validate a short-lived receipt
+  binding the course brief to the retrieved context and source set. The local
+  receipt lasts four hours and is invalidated by a server restart unless an
+  operator has deliberately configured a stable `RESEARCH_RECEIPT_SECRET`.
+  A future multi-instance deployment needs a shared operator-managed secret.
+  No secret needs to be entered to read the library. Receipt validation establishes
+  retrieval provenance, not the truth or completeness of a claim. Custom finance
+  detection is a heuristic; the explicit investment course type is the primary cue.
+- Quoted/international font-family preservation without admitting CSS URL loads.
+- Persistent library-load failure guidance and a non-destructive Retry button.
+- Same-origin browser mutation checks, canonical access-token signatures, and
+  portable ZIP paths on Windows.
 
 ## Content principles
 
@@ -91,5 +119,54 @@ checked at generation and again before publication.
 ## Simple local start
 
 On Windows, double-click `Start OpenMAIC.cmd`. It detects an already-running
-copy, starts only on port 3000 and opens the browser when the health check is
-ready. Keep its single black window open while using the classroom.
+copy by app identity, binds to `127.0.0.1:3000` only and opens the browser after
+the liveness check responds. It no longer launches through nested pnpm/cmd
+processes or passes a stray `--` project argument. Startup is bounded to three
+minutes and never terminates unrelated Node processes. Keep its single window
+open while using the classroom.
+
+The browser address remains `http://localhost:3000` so an existing learner keeps
+the same browser-storage origin. Changing to an IP address, port, browser or
+profile selects different browser data; it does not migrate existing courses.
+
+## Production-bundle verification
+
+```text
+pnpm install --frozen-lockfile
+pnpm build
+node scripts/prepare-standalone.mjs
+pnpm exec playwright install chromium --only-shell
+pnpm exec playwright test --config=playwright.pilot.config.ts
+```
+
+The packaging step copies the static browser assets omitted by a bare standalone
+build and refuses obvious local credential files. Do not copy `.env.local` or
+server-provider YAML into the package. Supply secrets at runtime through the
+deployment's secret-management facility. This check is not a complete secret scan.
+
+`/api/health` is explicitly a **liveness/configuration** report. Its `llm` flag
+means a server provider is configured, not that credit, connectivity, model
+availability or a completed lesson has been verified.
+
+Browser tests use a separate fresh profile and port 3003 with mocked generation
+and research. They prove UI behaviour, not the reliability of a live free model.
+The separate pilot-acceptance workflow is prepared locally; a workflow file is
+not proof that GitHub has run it.
+
+## Shared-host deployment boundaries
+
+The 22 September work deliberately leaves shared accounts, user-storage
+architecture and spending controls for further consideration. Built-in progress
+and review records use separate local browser keys and can be exported; this is
+not a new cloud/account storage design. See `ENHANCEMENTS-2026-09-22.md` for
+verification and remaining dependency/build findings.
+
+The local launcher is for one trusted machine. Do not expose it publicly or add a
+tunnel as a shortcut. A shared-access-code server is not a multi-user identity
+system. Real authenticated ownership, rate limiting, quotas, backups and recovery
+tests remain public-release requirements. A reverse proxy must preserve the
+canonical public request origin for the same-origin mutation check.
+
+The library is original draft content, not a redistribution of IU member courses.
+IU membership, content permissions and review approval remain separate from
+technical access. A subject-matter reviewer must sign off before publication.

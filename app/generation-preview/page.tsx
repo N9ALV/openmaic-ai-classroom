@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  assertInvestmentResearch,
+  requiresInvestmentResearch,
+} from '@/lib/home/investment-research';
+
 import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
@@ -469,6 +474,14 @@ function GenerationPreviewContent() {
       }
 
       // Step: Web Search (if enabled)
+      if (
+        requiresInvestmentResearch(currentSession.requirements) &&
+        !currentSession.requirements.webSearch
+      ) {
+        throw new Error(
+          'This investment brief requires research. Return home and configure Web Search before generating.',
+        );
+      }
       const webSearchStepIdx = activeSteps.findIndex((s) => s.id === 'web-search');
       if (currentSession.requirements.webSearch && webSearchStepIdx >= 0) {
         setCurrentStepIndex(webSearchStepIdx);
@@ -510,12 +523,20 @@ function GenerationPreviewContent() {
           ...currentSession,
           researchContext: searchData.context || '',
           researchSources: sources,
+          researchReceipt: searchData.researchReceipt,
+          researchRetrievedAt: searchData.retrievedAt,
         };
         setSession(updatedSessionWithSearch);
         sessionStorage.setItem('generationSession', JSON.stringify(updatedSessionWithSearch));
         currentSession = updatedSessionWithSearch;
         activeSteps = getActiveSteps(currentSession);
       }
+
+      assertInvestmentResearch(
+        currentSession.requirements,
+        currentSession.researchContext,
+        currentSession.researchSources,
+      );
 
       // Load imageMapping early (needed for both outline and scene generation).
       let imageMapping: ImageMapping = {};
@@ -536,6 +557,19 @@ function GenerationPreviewContent() {
         id: stageId,
         name: extractTopicFromRequirement(currentSession.requirements.requirement),
         description: '',
+        ...(requiresInvestmentResearch(currentSession.requirements)
+          ? {
+              education: {
+                courseType: 'investment' as const,
+                requirement: currentSession.requirements.requirement,
+                researchContext: currentSession.researchContext || '',
+                sources: currentSession.researchSources || [],
+                retrievedAt: currentSession.researchRetrievedAt,
+                generatedAt: new Date().toISOString(),
+                model: getCurrentModelConfig().modelString,
+              },
+            }
+          : {}),
         style: 'professional',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -575,6 +609,8 @@ function GenerationPreviewContent() {
                 pdfImages: currentSession.pdfImages,
                 imageMapping,
                 researchContext: currentSession.researchContext,
+                researchSources: currentSession.researchSources,
+                researchReceipt: currentSession.researchReceipt,
               }),
             ),
             signal,
@@ -977,6 +1013,9 @@ function GenerationPreviewContent() {
           agents,
           languageDirective,
           requirements: currentSession.requirements,
+          researchContext: currentSession.researchContext,
+          researchSources: currentSession.researchSources,
+          researchReceipt: currentSession.researchReceipt,
         },
         signal,
         FOREGROUND_SCENE_RETRY_OPTIONS,
@@ -1040,6 +1079,10 @@ function GenerationPreviewContent() {
       sessionStorage.setItem(
         'generationParams',
         JSON.stringify({
+          requirements: currentSession.requirements,
+          researchContext: currentSession.researchContext,
+          researchSources: currentSession.researchSources,
+          researchReceipt: currentSession.researchReceipt,
           pdfImages: currentSession.pdfImages,
           agents,
           userProfile,
