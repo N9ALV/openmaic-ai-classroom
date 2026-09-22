@@ -1,0 +1,20 @@
+diff --git a/index.js b/index.js
+--- a/index.js
++++ b/index.js
+@@ -3,7 +3,6 @@ let Marcheur = require('marcheur')
+   , nodal = require('marcheur/nodal')
+   , qname = require('marcheur/qname')
+   , Matcher = require('marcheur/matcher')
+-  , dom = require('get-dom')
+   , xpath = require('xpath')
+   , { oprx } = require('./operators')
+   , MATH_NS = 'http://www.w3.org/1998/Math/MathML'
+@@ -732,7 +731,7 @@ function createMPaddedAttr ({ zeroWid, zeroAsc, zeroDesc }) {
+ 
+ function setup (src, out, w) {
+   if (w.res) return;
+-  let doc = dom.implementation().createHTMLDocument('')
++  let doc = (src.nodeType === 9 ? src : src.ownerDocument).implementation.createDocument(MATH_NS, 'math', null)
+     , nod = nodal(doc, {}, nsMap)
+     , math = doc.createElementNS(MATH_NS, 'math')
+   ;
