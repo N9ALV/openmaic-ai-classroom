@@ -5,6 +5,14 @@
 This build is an **experimental, controlled internal pilot**. It is not yet
 approved for an unauthenticated public or multi-tenant production deployment.
 
+See [4 October local blocker repairs and verification](BLOCKER-REPAIRS-2026-10-04.md)
+for the security, dependency, rendering and standalone-release changes, and
+[5 October Muse/OpenRouter verification](LIVE-OPENROUTER-2026-10-05.md) for
+successful live text generation, teacher interaction, exports and fresh-browser
+recovery. These results cover local source and copied releases. Live investment
+retrieval, voice/image/video providers and shared member delivery acceptance
+remain pending.
+
 The practical first release target is a trusted single-user or small internal
 trial with server-managed model credentials, a strong access code, usage caps,
 manual content review and regular exports/backups.
@@ -140,7 +148,14 @@ pnpm exec playwright test --config=playwright.pilot.config.ts
 ```
 
 The packaging step copies the static browser assets omitted by a bare standalone
-build and refuses obvious local credential files. Do not copy `.env.local` or
+build, includes the runtime transport and makes dependency links portable. It
+removes only byte-identical generated copies of excluded worktree state and
+refuses new or changed runtime data. Use `node scripts/copy-standalone.mjs
+<new-directory>` to copy the prepared release; the destination must not exist.
+Verify that copy with `OPENMAIC_STANDALONE_DIR` and the production Playwright
+configuration, as described in the blocker-repairs report.
+
+Preparation refuses local credential files. Do not copy `.env.local` or
 server-provider YAML into the package. Supply secrets at runtime through the
 deployment's secret-management facility. This check is not a complete secret scan.
 

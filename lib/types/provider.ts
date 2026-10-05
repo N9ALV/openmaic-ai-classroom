@@ -190,4 +190,6 @@ export interface ModelConfig {
   baseUrl?: string;
   proxy?: string; // Optional: HTTP proxy URL for this provider
   providerType?: ProviderType; // Optional: for custom providers on server-side
+  /** Server-supplied transport for validated provider endpoints and redirects. */
+  fetchImpl?: typeof globalThis.fetch;
 }

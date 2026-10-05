@@ -23,7 +23,7 @@ type PersistencePrincipal = RuntimeHttpPrincipal & Partial<Pick<AssetPrincipal, 
  * The single asset partition for this deployment shape. Documents have no
  * ownership partition; assets get the same treatment until real auth lands.
  */
-const SHARED_ASSET_PRINCIPAL = 'shared';
+export const SHARED_ASSET_PRINCIPAL = 'shared';
 
 function singleHeader(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;

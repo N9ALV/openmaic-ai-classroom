@@ -2,11 +2,24 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : 'standalone',
+  // Runtime path discovery must not package developer evidence or private state.
+  outputFileTracingExcludes: {
+    '**/*': [
+      './.git/**/*',
+      './logs/**/*',
+      './data/**/*',
+      './test-results/**/*',
+      './playwright-report/**/*',
+      './blob-report/**/*',
+      './coverage/**/*',
+    ],
+  },
   outputFileTracingIncludes: {
     '/*': [
       'lib/server/agent-runtime/import-pptx-worker.mjs',
       'skills/openmaic/**',
       'skills/agent-runtime/**',
+      'node_modules/undici/**',
     ],
   },
   typescript: {

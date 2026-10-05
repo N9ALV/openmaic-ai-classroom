@@ -183,11 +183,12 @@ async function resolveExecutable(name: 'ffmpeg' | 'ffprobe'): Promise<string> {
     if (directory) candidates.add(resolvePath(directory, name));
   }
   for (const directory of ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin']) {
-    candidates.add(join(directory, name));
+    // Host executables are resolved at runtime, never bundled as application files.
+    candidates.add(join(/* turbopackIgnore: true */ directory, name));
   }
   for (const candidate of candidates) {
     try {
-      await access(candidate, fsConstants.X_OK);
+      await access(/* turbopackIgnore: true */ candidate, fsConstants.X_OK);
       return candidate;
     } catch {
       // Keep looking; the final error is explicit and permanent.
@@ -436,7 +437,7 @@ async function readRequiredIntermediate(
   deadline: MediaJobDeadline,
 ): Promise<Buffer> {
   try {
-    return await deadline.beforeAwait(() => readFile(path));
+    return await deadline.beforeAwait(() => readFile(/* turbopackIgnore: true */ path));
   } catch (error) {
     if (error instanceof MaterialExtractionError) throw error;
     throw new MaterialExtractionError(
@@ -648,7 +649,9 @@ export async function extractMediaMaterial(
       } finally {
         if (isVideo) await rm(audioInputPath, { force: true }).catch(() => undefined);
       }
-      const chunkPaths = (await deadline.beforeAwait(() => readdir(sessionDir)))
+      const chunkPaths = (
+        await deadline.beforeAwait(() => readdir(/* turbopackIgnore: true */ sessionDir))
+      )
         .filter((name) => /^chunk-\d{3}\.wav$/.test(name))
         .sort()
         .map((name) => join(sessionDir, name));
@@ -730,7 +733,9 @@ export async function extractMediaMaterial(
             deadline,
           );
           stage = 'read';
-          const frameBytes = await deadline.beforeAwait(() => readFile(framePath));
+          const frameBytes = await deadline.beforeAwait(() =>
+            readFile(/* turbopackIgnore: true */ framePath),
+          );
           stage = 'prepare';
           const prepared = await deadline.beforeAwait(() => prepareDerivedImage(frameBytes));
           if (!prepared) {

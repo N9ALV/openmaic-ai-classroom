@@ -33,6 +33,14 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Runtime data and generated verification artefacts (also Git-ignored).
+    // Render evidence can contain copied third-party browser libraries.
+    'data/**',
+    'logs/**',
+    'test-results/**',
+    'playwright-report/**',
+    'blob-report/**',
+    'coverage/**',
     // Third-party / vendored packages (not our code):
     'packages/docs/**',
     'packages/mathml2omml/**',

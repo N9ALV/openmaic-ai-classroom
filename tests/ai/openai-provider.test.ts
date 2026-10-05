@@ -183,7 +183,7 @@ describe('OpenAI provider defaults', () => {
     const options = openAiMock.createOpenAI.mock.calls.at(-1)?.[0] as
       | { fetch?: typeof fetch }
       | undefined;
-    expect(options?.fetch).toBeUndefined();
+    expect(options?.fetch).toEqual(expect.any(Function));
     expect(openAiMock.responses).toHaveBeenCalledWith('gpt-5.6-sol');
     expect(openAiMock.chat).not.toHaveBeenCalled();
   });
@@ -223,7 +223,7 @@ describe('OpenAI provider defaults', () => {
     const options = openAiMock.createOpenAI.mock.calls.at(-1)?.[0] as
       | { fetch?: typeof fetch }
       | undefined;
-    expect(options?.fetch).toBeUndefined();
+    expect(options?.fetch).toEqual(expect.any(Function));
     expect(openAiMock.responses).toHaveBeenCalledWith('gpt-5.6-sol');
     expect(openAiMock.chat).not.toHaveBeenCalled();
   });
@@ -401,6 +401,7 @@ describe('OpenAI provider defaults', () => {
     expect(azureMock.createAzure).toHaveBeenCalledWith({
       apiKey: 'azure-key',
       baseURL: 'https://test-resource.openai.azure.com/openai',
+      fetch: expect.any(Function),
     });
     expect(azureMock.model).toHaveBeenCalledWith('course-generation');
     expect(model).toEqual({
@@ -420,6 +421,7 @@ describe('OpenAI provider defaults', () => {
     expect(azureMock.createAzure).toHaveBeenCalledWith({
       apiKey: 'azure-key',
       baseURL: 'https://fast-ai-resource.services.ai.azure.com/openai/v1',
+      fetch: expect.any(Function),
     });
   });
 

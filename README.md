@@ -7,6 +7,9 @@ simple Windows launcher.
 
 **Start here:**
 
+- [Live Muse/OpenRouter verification and repairs, 5 October 2026](LIVE-OPENROUTER-2026-10-05.md)
+- [Blocker repairs and fresh verification, 4 October 2026](BLOCKER-REPAIRS-2026-10-04.md)
+- [Development and product takeover, 3 October 2026](DEVELOPMENT-TAKEOVER-2026-10-03.md)
 - [Beginner orientation: use it, then explain it](ORIENTATION.md)
 - [Beginner quick guide](BEGINNER-QUICK-GUIDE.md)
 - [Orientation progress and resume point](ORIENTATION-PROGRESS.md)

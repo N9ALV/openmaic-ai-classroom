@@ -25,6 +25,7 @@ test.describe('Slide content surface (#647)', () => {
     // Generate a classroom through the mocked pipeline, then enter Pro mode.
     const home = new HomePage(page);
     await home.goto();
+    await home.selectCourseType('general');
     // Dismiss the "What's New" changelog modal that overlays the home page on
     // first load (it intercepts the submit button otherwise).
     await page

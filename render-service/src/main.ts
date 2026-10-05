@@ -38,6 +38,7 @@ import {
 } from './render-coordinator.js';
 import { InProcessExecutor } from './render-executor.js';
 import { InvalidProjectError, unzipProject as defaultUnzipProject } from './unzip.js';
+import { hardenProjectDirectory } from './project-html-hardening.js';
 import { capBodyStream } from './capped-stream.js';
 import { Semaphore } from './semaphore.js';
 import { PreviewGate, PreviewRejectedError } from './preview-gate.js';
@@ -89,6 +90,8 @@ export interface AppDeps {
   previewMaxJsonBytes?: number;
   /** Extract a validated archive into a dir. Overridable in tests. */
   unzipProject?: (zip: Uint8Array, destDir: string) => Promise<void>;
+  /** Inject the untrusted render CSP into an extracted project. Overridable in tests. */
+  hardenProject?: (projectDir: string) => Promise<void>;
   /** Create a fresh per-render scratch dir. Overridable in tests. */
   makeProjectDir?: () => Promise<string>;
   /** Runtime identity reported by health and copied into per-render metrics. */
@@ -229,6 +232,7 @@ function parseOptions(form: FormData): RenderOptions | string {
 export function createApp(deps: AppDeps): Hono {
   const { jobs, artifacts, coordinator, extractionGate } = deps;
   const unzipProject = deps.unzipProject ?? defaultUnzipProject;
+  const hardenProject = deps.hardenProject ?? hardenProjectDirectory;
   const makeProjectDir = deps.makeProjectDir ?? defaultMakeProjectDir;
   const previewRenderer = deps.previewRenderer ?? new ChromiumPreviewRenderer();
   const previewDeadlineMs = deps.previewDeadlineMs ?? config.previewDeadlineMs;
@@ -316,6 +320,8 @@ export function createApp(deps: AppDeps): Hono {
         projectDir = await makeProjectDir();
         const bytes = new Uint8Array(await file.arrayBuffer());
         await unzipProject(bytes, projectDir);
+        // Harden the extracted HTML before the producer reads any of it.
+        await hardenProject(projectDir);
         return coordinator.submit(reservation, projectDir, options);
       });
       return c.json({ jobId }, 202);

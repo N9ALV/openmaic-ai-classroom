@@ -46,7 +46,8 @@ export class LocalMaterialByteStore implements MaterialByteStore {
   }
 
   async get(key: string): Promise<Buffer> {
-    return readFile(safeLocalPath(this.root, key));
+    // Uploaded material belongs to runtime storage, never the deployment bundle.
+    return readFile(/* turbopackIgnore: true */ safeLocalPath(this.root, key));
   }
 
   async delete(key: string): Promise<void> {

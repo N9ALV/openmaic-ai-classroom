@@ -35,6 +35,7 @@ export const API_ERROR_CODES = {
   QWEN_TTS_ERROR: 'QWEN_TTS_ERROR',
   GENERATION_FAILED: 'GENERATION_FAILED',
   TRANSCRIPTION_FAILED: 'TRANSCRIPTION_FAILED',
+  TTS_INVALID_RESPONSE: 'TTS_INVALID_RESPONSE',
   PARSE_FAILED: 'PARSE_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
@@ -46,6 +47,7 @@ export interface ApiErrorBody {
   errorCode: ApiErrorCode;
   error: string;
   details?: string;
+  reason?: 'queue_full' | 'per_identity_limit';
 }
 
 export function apiError(
@@ -53,6 +55,7 @@ export function apiError(
   status: number,
   error: string,
   details?: string,
+  reason?: 'queue_full' | 'per_identity_limit',
 ): NextResponse<ApiErrorBody> {
   return NextResponse.json(
     {
@@ -60,6 +63,7 @@ export function apiError(
       errorCode: code,
       error,
       ...(details ? { details } : {}),
+      ...(reason ? { reason } : {}),
     },
     { status },
   );

@@ -22,6 +22,7 @@ test.describe('Full Happy Path', () => {
     // ── Phase 1: Home page ──────────────────────────────────────────────
     const home = new HomePage(page);
     await home.goto();
+    await home.selectCourseType('general');
 
     // Core UI elements visible
     await expect(home.logo).toBeVisible();

@@ -23,6 +23,10 @@ export class HomePage {
     await this.textarea.fill(text);
   }
 
+  async selectCourseType(courseType: 'investment' | 'general') {
+    await this.page.getByLabel('Lesson type').selectOption(courseType);
+  }
+
   async submit() {
     await this.enterButton.click();
   }

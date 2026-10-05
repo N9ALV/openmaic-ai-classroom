@@ -426,6 +426,13 @@ const THINKING_CAPABILITIES: Record<string, ThinkingCapability> = {
     ['low', 'medium', 'high'],
     'medium',
   ),
+  // OpenRouter marks Muse reasoning as mandatory. Hide the Off control and
+  // map best-effort disabling to minimal effort through the existing adapter.
+  [getModelMetadataKey('openrouter', 'meta/muse-spark-1.3-contributor')]: effortCapability(
+    'openrouter',
+    ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+    'medium',
+  ),
 
   [getModelMetadataKey('grok', 'grok-4.6')]: grok46Effort,
   [getModelMetadataKey('grok', 'grok-4.5')]: grok45Effort,
